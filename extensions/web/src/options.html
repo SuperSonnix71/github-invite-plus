@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src *; style-src 'self' 'unsafe-inline'" />
+  <title>GitHub Invite Plus - Options</title>
+  <style>
+    body { font-family: system-ui, -apple-system; padding: 24px; max-width: 680px; }
+    label { display:block; margin-top: 12px; font-weight: 600; }
+    input { width: 100%; padding: 10px; margin-top: 6px; box-sizing: border-box; }
+    button { margin-top: 12px; padding: 10px 12px; }
+    .row { display:flex; gap: 10px; flex-wrap: wrap; }
+    .ok { color: #0a7; }
+    .err { color: #c00; }
+    code { background: rgba(0,0,0,0.05); padding: 2px 6px; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <h2>GitHub Invite Plus</h2>
+
+  <label>Backend URL</label>
+  <input id="server" placeholder="https://your-backend.example.com" />
+
+  <div class="row">
+    <button id="connect">Connect GitHub</button>
+    <button id="logout">Logout</button>
+    <button id="refreshMe">Refresh session</button>
+  </div>
+
+  <p id="status"></p>
+
+  <hr />
+
+  <h3>Indexing</h3>
+  <p>Index a repo branch into Meilisearch (multi-branch search uses this index).</p>
+  <label>Repo (owner/repo)</label>
+  <input id="repo" placeholder="octocat/Hello-World" />
+  <label>Branch</label>
+  <input id="branch" placeholder="main" />
+  <button id="indexBranch">Index branch</button>
+
+  <p style="font-size:12px;opacity:.85;margin-top:24px">For cookie sessions to work from an extension, your backend must be <strong>HTTPS</strong> in production and send cookies with <code>SameSite=None; Secure</code>.</p>
+
+  <script type="module" src="options.js"></script>
+</body>
+</html>

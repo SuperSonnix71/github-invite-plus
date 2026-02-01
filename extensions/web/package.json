@@ -1,0 +1,13 @@
+{
+  "name": "@gip/extension-web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json && node ./scripts/copy-static.js",
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "@types/chrome": "0.0.266",
+    "typescript": "5.6.3"
+  }
+}

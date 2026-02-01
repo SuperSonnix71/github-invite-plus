@@ -1,0 +1,39 @@
+{
+  "name": "@gip/server",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@octokit/rest": "21.0.2",
+    "better-sqlite3": "11.7.0",
+    "better-sqlite3-session-store": "0.1.0",
+    "cors": "2.8.5",
+    "dotenv": "16.4.5",
+    "express": "4.19.2",
+    "express-rate-limit": "7.4.0",
+    "express-session": "1.18.1",
+    "helmet": "7.1.0",
+    "meilisearch": "0.45.0",
+    "nanoid": "5.0.7",
+    "pino": "9.4.0",
+    "pino-http": "9.0.0",
+    "zod": "3.23.8"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/cors": "2.8.17",
+    "@types/express": "4.17.21",
+    "@types/express-session": "1.18.2",
+    "@types/node": "22.5.5",
+    "eslint": "9.9.1",
+    "tsx": "4.19.1",
+    "typescript": "5.6.3",
+    "typescript-eslint": "^8.54.0"
+  }
+}

@@ -17,12 +17,49 @@ echo -e "${BLUE}========================================${NC}"
 echo ""
 
 if [ ! -f "$SCRIPT_DIR/.env" ]; then
-    echo -e "${RED}Error: .env file not found!${NC}"
-    echo -e "${YELLOW}Please copy .env.example to .env and configure it:${NC}"
-    echo -e "  cd $SCRIPT_DIR"
-    echo -e "  cp .env.example .env"
-    echo -e "  nano .env"
-    exit 1
+    echo -e "${YELLOW}.env file not found. Creating from template...${NC}"
+    
+    if [ ! -f "$SCRIPT_DIR/.env.example" ]; then
+        echo -e "${RED}Error: .env.example file not found!${NC}"
+        exit 1
+    fi
+    
+    cp "$SCRIPT_DIR/.env.example" "$SCRIPT_DIR/.env"
+    
+    # Generate random secrets
+    TOKEN_ENC_KEY=$(openssl rand -base64 32)
+    SESSION_SECRET=$(openssl rand -base64 32)
+    MEILI_MASTER_KEY=$(openssl rand -base64 32)
+    
+    # Replace placeholders with generated values
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS
+        sed -i '' "s|TOKEN_ENC_KEY_BASE64=.*|TOKEN_ENC_KEY_BASE64=$TOKEN_ENC_KEY|" "$SCRIPT_DIR/.env"
+        sed -i '' "s|SESSION_SECRET=.*|SESSION_SECRET=$SESSION_SECRET|" "$SCRIPT_DIR/.env"
+        sed -i '' "s|MEILI_MASTER_KEY=.*|MEILI_MASTER_KEY=$MEILI_MASTER_KEY|" "$SCRIPT_DIR/.env"
+    else
+        # Linux
+        sed -i "s|TOKEN_ENC_KEY_BASE64=.*|TOKEN_ENC_KEY_BASE64=$TOKEN_ENC_KEY|" "$SCRIPT_DIR/.env"
+        sed -i "s|SESSION_SECRET=.*|SESSION_SECRET=$SESSION_SECRET|" "$SCRIPT_DIR/.env"
+        sed -i "s|MEILI_MASTER_KEY=.*|MEILI_MASTER_KEY=$MEILI_MASTER_KEY|" "$SCRIPT_DIR/.env"
+    fi
+    
+    echo -e "${GREEN}✓ Created .env file with auto-generated secrets${NC}"
+    echo ""
+    echo -e "${YELLOW}⚠️  IMPORTANT: You must configure these values in docker/.env:${NC}"
+    echo -e "  ${BLUE}BASE_URL${NC}                  - Your server URL (e.g., http://your-ip:8787)"
+    echo -e "  ${BLUE}GITHUB_APP_CLIENT_ID${NC}      - From your GitHub App"
+    echo -e "  ${BLUE}GITHUB_APP_CLIENT_SECRET${NC}  - From your GitHub App"
+    echo -e "  ${BLUE}EXTENSION_REDIRECT_URI${NC}    - Your Chrome extension redirect URI"
+    echo ""
+    echo -e "${YELLOW}Edit the file now?${NC} [y/N]: "
+    read -r response
+    if [[ "$response" =~ ^[Yy]$ ]]; then
+        ${EDITOR:-nano} "$SCRIPT_DIR/.env"
+    else
+        echo -e "${RED}Deployment cancelled. Please edit docker/.env and run ./deploy.sh again${NC}"
+        exit 1
+    fi
 fi
 
 echo -e "${YELLOW}Loading environment variables...${NC}"

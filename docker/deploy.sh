@@ -18,19 +18,19 @@ echo ""
 
 if [ ! -f "$SCRIPT_DIR/.env" ]; then
     echo -e "${YELLOW}.env file not found. Creating from template...${NC}"
-    
+
     if [ ! -f "$SCRIPT_DIR/.env.example" ]; then
         echo -e "${RED}Error: .env.example file not found!${NC}"
         exit 1
     fi
-    
+
     cp "$SCRIPT_DIR/.env.example" "$SCRIPT_DIR/.env"
-    
+
     # Generate random secrets
     TOKEN_ENC_KEY=$(openssl rand -base64 32)
     SESSION_SECRET=$(openssl rand -base64 32)
     MEILI_MASTER_KEY=$(openssl rand -base64 32)
-    
+
     # Replace placeholders with generated values
     if [[ "$OSTYPE" == "darwin"* ]]; then
         # macOS
@@ -43,7 +43,7 @@ if [ ! -f "$SCRIPT_DIR/.env" ]; then
         sed -i "s|SESSION_SECRET=.*|SESSION_SECRET=$SESSION_SECRET|" "$SCRIPT_DIR/.env"
         sed -i "s|MEILI_MASTER_KEY=.*|MEILI_MASTER_KEY=$MEILI_MASTER_KEY|" "$SCRIPT_DIR/.env"
     fi
-    
+
     echo -e "${GREEN}✓ Created .env file with auto-generated secrets${NC}"
     echo ""
     echo -e "${YELLOW}⚠️  IMPORTANT: You must configure these values in docker/.env:${NC}"

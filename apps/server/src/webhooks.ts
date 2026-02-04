@@ -4,7 +4,7 @@ import type { Db } from "./db.js";
 import { env } from "./env.js";
 import { logger } from "./logger.js";
 import { enqueueIndexBranch } from "./jobs.js";
-import { meili, indexNameForUser } from "./meili.js";
+import { meili, indexNameForUser, clearIndexCache } from "./meili.js";
 import { sanitizeMeiliValue } from "./validate.js";
 
 function verifySignature(payload: Buffer, signature: string | undefined, secret: string): boolean {
@@ -78,9 +78,29 @@ function handlePush(db: Db, body: Record<string, unknown>): void {
   const sender = bodyObj(body, "sender");
   const senderLogin = sender ? bodyStr(sender, "login") : "";
 
-  if (!ref.startsWith("refs/heads/") || !repoFullName || deleted) return;
+  if (!ref.startsWith("refs/heads/") || !repoFullName) return;
 
   const branch = ref.replace("refs/heads/", "");
+
+  if (deleted) {
+    const rows = db.prepare(
+      "SELECT github_user_id FROM repo_branch_index_state WHERE repo_full_name=? AND branch=?"
+    ).all(repoFullName, branch) as { github_user_id: number }[];
+
+    for (const row of rows) {
+      const idx = meili.index(indexNameForUser(row.github_user_id));
+      const filter = `repo = "${sanitizeMeiliValue(repoFullName)}" AND branch = "${sanitizeMeiliValue(branch)}"`;
+      void idx.deleteDocuments({ filter }).catch((err: unknown) => {
+        logger.error({ err, githubUserId: row.github_user_id, repoFullName, branch }, "Failed to delete docs for deleted branch");
+      });
+
+      db.prepare("DELETE FROM repo_branch_index_state WHERE github_user_id=? AND repo_full_name=? AND branch=?")
+        .run(row.github_user_id, repoFullName, branch);
+
+      logger.info({ githubUserId: row.github_user_id, repoFullName, branch, pusher: senderLogin }, "Deleted branch webhook cleaned up docs and DB");
+    }
+    return;
+  }
 
   const indexedRows = db.prepare(
     "SELECT github_user_id FROM repo_branch_index_state WHERE repo_full_name=? AND branch=? AND status='indexed'"
@@ -135,6 +155,7 @@ function handleAppAuthRevoked(db: Db, body: Record<string, unknown>): void {
 
   const idxName = indexNameForUser(senderId);
   void meili.deleteIndex(idxName).catch((_e: unknown) => undefined);
+  clearIndexCache(senderId);
 
   db.prepare("DELETE FROM repo_branch_index_state WHERE github_user_id=?").run(senderId);
   db.prepare("DELETE FROM repo_index_config WHERE github_user_id=?").run(senderId);

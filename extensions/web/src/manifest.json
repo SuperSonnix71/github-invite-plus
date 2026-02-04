@@ -1,34 +1,37 @@
 {
-  "manifest_version": 3,
-  "name": "GitHub Invite Plus",
-  "version": "2.0.0",
-  "description": "Makes GitHub invitations hard to miss and adds multi-branch code search via Meilisearch.",
-  "permissions": [
-    "storage",
-    "alarms",
-    "identity"
-  ],
-  "host_permissions": [
-    "https://github.com/*",
-    "http://localhost:8787/*"
-  ],
-  "background": {
-    "service_worker": "service_worker.js",
-    "type": "module"
-  },
-  "content_scripts": [
-    {
-      "matches": [
-        "https://github.com/*"
-      ],
-      "js": [
-        "content_script.js"
-      ],
-      "run_at": "document_idle"
+    "manifest_version": 3,
+    "name": "GitHub Invite Plus",
+    "version": "2.0.0",
+    "description": "Makes GitHub invitations hard to miss and adds multi-branch code search via Meilisearch.",
+    "permissions": [
+        "storage",
+        "alarms",
+        "identity"
+    ],
+    "host_permissions": [
+        "https://github.com/*",
+        "http://localhost:*/*"
+    ],
+    "optional_host_permissions": [
+        "https://*/*"
+    ],
+    "background": {
+        "service_worker": "service_worker.js",
+        "type": "module"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "https://github.com/*"
+            ],
+            "js": [
+                "content_script.js"
+            ],
+            "run_at": "document_idle"
+        }
+    ],
+    "options_page": "options.html",
+    "action": {
+        "default_title": "GitHub Invite Plus"
     }
-  ],
-  "options_page": "options.html",
-  "action": {
-    "default_title": "GitHub Invite Plus"
-  }
 }

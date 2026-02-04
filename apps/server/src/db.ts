@@ -29,7 +29,8 @@ function migrate(db: Db): void {
       state TEXT PRIMARY KEY,
       created_at INTEGER NOT NULL,
       expires_at INTEGER NOT NULL,
-      fingerprint TEXT NOT NULL DEFAULT ''
+      fingerprint TEXT NOT NULL DEFAULT '',
+      redirect_uri TEXT NOT NULL DEFAULT ''
     );
 
     CREATE TABLE IF NOT EXISTS invites (

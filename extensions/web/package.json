@@ -3,11 +3,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc -p tsconfig.json && node ./scripts/copy-static.js",
+    "build": "node ./scripts/build.js && node ./scripts/copy-static.js",
     "lint": "eslint ."
   },
   "devDependencies": {
     "@types/chrome": "0.0.266",
+    "esbuild": "^0.24.0",
     "typescript": "5.6.3"
   }
 }

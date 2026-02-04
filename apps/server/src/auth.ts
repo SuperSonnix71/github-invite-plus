@@ -1,4 +1,4 @@
-import { Router, type Request, type Response, type NextFunction } from "express";
+import { Router, type Request, type Response } from "express";
 import { nanoid } from "nanoid";
 import crypto from "crypto";
 import type { Db } from "./db.js";
@@ -6,15 +6,12 @@ import { env } from "./env.js";
 import { logger } from "./logger.js";
 import { encryptString } from "./crypto.js";
 import { exchangeCodeForUserToken, getAuthenticatedUser } from "./github.js";
+import { asyncHandler } from "./middleware.js";
+import { requireCsrf } from "./middleware.js";
+import { cookieSecure } from "./env.js";
 
 function jsonError(res: Response, status: number, msg: string) {
   res.status(status).json({ ok: false, error: msg });
-}
-
-function asyncHandler(fn: (req: Request, res: Response, next: NextFunction) => Promise<void>) {
-  return (req: Request, res: Response, next: NextFunction) => {
-    fn(req, res, next).catch(next);
-  };
 }
 
 function originFingerprint(req: Request): string {
@@ -26,13 +23,15 @@ function originFingerprint(req: Request): string {
 export function createAuthRouter(db: Db): Router {
   const r = Router();
 
+  const ALLOWED_REDIRECT_URIS = new Set([
+    env.EXTENSION_REDIRECT_URI,
+  ]);
+
   r.post("/start", (req: Request, res: Response) => {
     try {
       const body = req.body as Record<string, unknown> | null;
       const redirectUri = typeof body?.redirectUri === "string" ? body.redirectUri : "";
-      let redirectHost = "";
-      try { redirectHost = new URL(redirectUri).hostname; } catch { /* invalid URL */ }
-      if (!redirectUri.startsWith("https://") || !redirectHost.endsWith(".chromiumapp.org")) {
+      if (!ALLOWED_REDIRECT_URIS.has(redirectUri)) {
         jsonError(res, 400, "Invalid redirectUri");
         return;
       }
@@ -42,7 +41,7 @@ export function createAuthRouter(db: Db): Router {
       const expiresAt = ts + 10 * 60_000;
       const fingerprint = originFingerprint(req);
 
-      db.prepare("INSERT INTO oauth_states(state, created_at, expires_at, fingerprint) VALUES(?,?,?,?)").run(state, ts, expiresAt, fingerprint);
+      db.prepare("INSERT INTO oauth_states(state, created_at, expires_at, fingerprint, redirect_uri) VALUES(?,?,?,?,?)").run(state, ts, expiresAt, fingerprint, redirectUri);
 
       const url = new URL("https://github.com/login/oauth/authorize");
       url.searchParams.set("client_id", env.GITHUB_APP_CLIENT_ID);
@@ -67,7 +66,7 @@ export function createAuthRouter(db: Db): Router {
     }
 
     const fingerprint = originFingerprint(req);
-    const st = db.prepare("SELECT state, expires_at, fingerprint FROM oauth_states WHERE state=?").get(state) as { state: string; expires_at: number; fingerprint: string } | undefined;
+    const st = db.prepare("SELECT state, expires_at, fingerprint, redirect_uri FROM oauth_states WHERE state=?").get(state) as { state: string; expires_at: number; fingerprint: string; redirect_uri: string } | undefined;
     if (!st || st.expires_at < Date.now()) {
       jsonError(res, 400, "Invalid or expired state");
       return;
@@ -75,6 +74,11 @@ export function createAuthRouter(db: Db): Router {
     if (st.fingerprint !== fingerprint) {
       db.prepare("DELETE FROM oauth_states WHERE state=?").run(state);
       jsonError(res, 400, "State origin mismatch");
+      return;
+    }
+    if (st.redirect_uri !== redirectUri) {
+      db.prepare("DELETE FROM oauth_states WHERE state=?").run(state);
+      jsonError(res, 400, "Redirect URI mismatch");
       return;
     }
     db.prepare("DELETE FROM oauth_states WHERE state=?").run(state);
@@ -115,17 +119,21 @@ export function createAuthRouter(db: Db): Router {
     });
   }));
 
-  r.post("/logout", (req: Request, res: Response) => {
-    req.session.destroy((err: unknown) => {
-      if (err) {
-        logger.warn({ err }, "Logout destroy session failed");
-        jsonError(res, 500, "Logout failed");
-        return;
-      }
-      res.clearCookie("__Host-gip_sid");
-      res.json({ ok: true });
+  r.post("/logout", requireCsrf, asyncHandler(async (req: Request, res: Response) => {
+    const cookieName = cookieSecure() ? "__Host-gip_sid" : "gip_sid";
+    await new Promise<void>((resolve, reject) => {
+      req.session.destroy((err: unknown) => {
+        if (err) {
+          const errMsg = err instanceof Error ? err.message : (typeof err === "string" ? err : "Unknown error");
+          reject(new Error(errMsg));
+        } else {
+          resolve();
+        }
+      });
     });
-  });
+    res.clearCookie(cookieName);
+    res.json({ ok: true });
+  }));
 
   return r;
 }

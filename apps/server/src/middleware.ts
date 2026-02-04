@@ -1,6 +1,12 @@
 import crypto from "crypto";
 import type { Request, Response, NextFunction } from "express";
 
+export function asyncHandler(fn: (req: Request, res: Response, next: NextFunction) => Promise<void>) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    fn(req, res, next).catch(next);
+  };
+}
+
 export function requireAuth(req: Request, res: Response, next: NextFunction): void {
   if (!req.session.user) {
     res.status(401).json({ ok: false, error: "Not authenticated" });

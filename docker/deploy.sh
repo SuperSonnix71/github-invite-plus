@@ -20,7 +20,7 @@ if [ ! -f "$SCRIPT_DIR/.env" ]; then
     echo -e "${YELLOW}.env file not found. Creating from template...${NC}"
     echo -e "${BLUE}Script directory: $SCRIPT_DIR${NC}"
     echo -e "${BLUE}Looking for: $SCRIPT_DIR/.env.example${NC}"
-    
+
     if [ ! -f "$SCRIPT_DIR/.env.example" ]; then
         echo -e "${RED}Error: .env.example file not found!${NC}"
         echo -e "${YELLOW}Files in directory:${NC}"

@@ -4,16 +4,16 @@ import { logger } from "./logger.js";
 export type Db = Database.Database;
 
 export function openDb(filePath: string): Db {
-  const db = new Database(filePath);
-  db.pragma("journal_mode = WAL");
-  db.pragma("foreign_keys = ON");
-  migrate(db);
-  logger.info({ filePath }, "SQLite DB opened");
-  return db;
+    const db = new Database(filePath);
+    db.pragma("journal_mode = WAL");
+    db.pragma("foreign_keys = ON");
+    migrate(db);
+    logger.info({ filePath }, "SQLite DB opened");
+    return db;
 }
 
 function migrate(db: Db): void {
-  db.exec(`
+    db.exec(`
     CREATE TABLE IF NOT EXISTS users (
       github_user_id INTEGER PRIMARY KEY,
       github_login TEXT NOT NULL,
@@ -89,14 +89,14 @@ function migrate(db: Db): void {
     CREATE INDEX IF NOT EXISTS idx_rbi_repo_branch ON repo_branch_index_state (repo_full_name, branch);
   `);
 
-  cleanupExpiredOauthStates(db);
+    cleanupExpiredOauthStates(db);
 }
 
 function cleanupExpiredOauthStates(db: Db): void {
-  db.prepare("DELETE FROM oauth_states WHERE expires_at < ?").run(Date.now());
+    db.prepare("DELETE FROM oauth_states WHERE expires_at < ?").run(Date.now());
 }
 
 export function periodicCleanup(db: Db): void {
-  cleanupExpiredOauthStates(db);
-  db.prepare("DELETE FROM jobs WHERE status='done' AND updated_at < ?").run(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    cleanupExpiredOauthStates(db);
+    db.prepare("DELETE FROM jobs WHERE status='done' AND updated_at < ?").run(Date.now() - 7 * 24 * 60 * 60 * 1000);
 }

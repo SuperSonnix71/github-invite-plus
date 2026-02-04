@@ -117,7 +117,7 @@ export async function listRepoInvites(accessToken: string, etag?: string | null)
         const allInvites: { id: number; repository: { full_name: string }; inviter?: { login: string } | null; created_at: string }[] = [];
         let responseEtag: string | null = null;
 
-        const requestOptions: {per_page: number; headers?: Record<string, string>} = {
+        const requestOptions: { per_page: number; headers?: Record<string, string> } = {
             per_page: 100,
         };
         if (etag) {

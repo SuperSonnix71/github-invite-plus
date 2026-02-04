@@ -1,14 +1,14 @@
 {
-  "name": "@gip/extension-web",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "build": "node ./scripts/build.js && node ./scripts/copy-static.js",
-    "lint": "eslint ."
-  },
-  "devDependencies": {
-    "@types/chrome": "0.0.266",
-    "esbuild": "^0.24.0",
-    "typescript": "5.6.3"
-  }
+    "name": "@gip/extension-web",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "build": "node ./scripts/build.js && node ./scripts/copy-static.js",
+        "lint": "eslint ."
+    },
+    "devDependencies": {
+        "@types/chrome": "0.0.266",
+        "esbuild": "^0.24.0",
+        "typescript": "5.6.3"
+    }
 }
